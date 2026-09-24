@@ -85,7 +85,8 @@ export function rowsToImprovements(rows: unknown[][]): ImportResult {
 async function readCsvText(file: File): Promise<string> {
   const buffer = await file.arrayBuffer()
   const utf8 = new TextDecoder('utf-8').decode(buffer)
-  if (!utf8.includes('�')) return utf8.replace(/^﻿/, '')
+  // o caractere de substituição (U+FFFD) indica bytes inválidos em UTF-8
+  if (!utf8.includes(String.fromCharCode(0xfffd))) return utf8.replace(/^\uFEFF/, '')
   return new TextDecoder('windows-1252').decode(buffer)
 }
 
