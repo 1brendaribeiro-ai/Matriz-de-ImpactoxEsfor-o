@@ -1,0 +1,332 @@
+.matrix-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+  padding: 16px 18px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+}
+
+.matrix-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.matrix-filter-note {
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---- Moldura com eixos ---- */
+.matrix-frame {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) 30px;
+  column-gap: 8px;
+}
+
+.axis {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.axis-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-2);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.axis-end {
+  color: var(--faint);
+}
+
+.axis-y {
+  grid-row: 1;
+  grid-column: 1;
+  flex-direction: column;
+  padding: 4px 0;
+}
+
+.axis-y .axis-label,
+.axis-y .axis-end {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.axis-y .axis-label svg {
+  transform: rotate(180deg);
+}
+
+.axis-x {
+  grid-row: 2;
+  grid-column: 2;
+  padding: 0 4px;
+}
+
+/* ---- Tabuleiro ---- */
+.board {
+  position: relative;
+  grid-row: 1;
+  grid-column: 2;
+  min-height: 460px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.quadrant-grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+.quadrant {
+  position: relative;
+  background: var(--q-tint);
+  transition:
+    background-color 0.18s,
+    box-shadow 0.18s;
+}
+
+.quadrant:nth-child(odd) {
+  border-right: 1px solid var(--border-strong);
+}
+
+.quadrant:nth-child(-n + 2) {
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.quadrant.q-quick-wins {
+  --q-accent: var(--q-quick);
+  --q-tint: var(--q-quick-tint);
+  --q-strong: var(--q-quick-strong);
+}
+.quadrant.q-strategic {
+  --q-accent: var(--q-strategic);
+  --q-tint: var(--q-strategic-tint);
+  --q-strong: var(--q-strategic-strong);
+}
+.quadrant.q-incremental {
+  --q-accent: var(--q-incremental);
+  --q-tint: var(--q-incremental-tint);
+  --q-strong: var(--q-incremental-strong);
+}
+.quadrant.q-low-priority {
+  --q-accent: var(--q-low);
+  --q-tint: var(--q-low-tint);
+  --q-strong: var(--q-low-strong);
+}
+
+.quadrant-header {
+  position: absolute;
+  top: 12px;
+  left: 14px;
+  right: 14px;
+  pointer-events: none;
+}
+
+.quadrant-axes {
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.quadrant-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 1px;
+}
+
+.quadrant-title {
+  color: var(--q-accent);
+  font-size: 14px;
+  font-weight: 750;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.quadrant-count {
+  min-width: 22px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+  font-size: 11.5px;
+  font-weight: 650;
+  line-height: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.quadrant-action {
+  display: inline-block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.quadrant-action::before {
+  content: '→ ';
+  color: var(--q-accent);
+}
+
+/* Destaques durante o arraste */
+.quadrant.is-dragging {
+  background: color-mix(in srgb, var(--q-tint) 70%, white);
+}
+
+.quadrant.is-drop-target {
+  background: var(--q-strong);
+  box-shadow: inset 0 0 0 2px var(--q-accent);
+}
+
+.drop-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--q-accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  transform: translateX(-50%);
+  box-shadow: var(--shadow-md);
+  animation: hint-in 0.16s ease-out;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+@keyframes hint-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 4px);
+  }
+}
+
+.board-center-mark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.card-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.board-empty {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  max-width: 280px;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px dashed var(--border-strong);
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+  transform: translate(-50%, calc(-50% + 40px));
+  pointer-events: none;
+}
+
+.drop-ghost {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 184px;
+  height: 62px;
+  border: 1.5px dashed var(--q-accent);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--q-accent) 8%, transparent);
+  pointer-events: none;
+}
+
+/* ---- Palco de exportação (fora da tela) ---- */
+.export-stage {
+  position: fixed;
+  top: 0;
+  left: -20000px;
+  pointer-events: none;
+}
+
+.export-sheet {
+  width: 1460px;
+  padding: 32px 36px 28px;
+  background: #fff;
+}
+
+.export-sheet .matrix-frame {
+  grid-template-rows: auto 30px;
+}
+
+.export-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--primary);
+}
+
+.export-title {
+  font-size: 22px;
+  font-weight: 750;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.export-subtitle {
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.export-meta {
+  color: var(--muted);
+  font-size: 13px;
+  text-align: right;
+}

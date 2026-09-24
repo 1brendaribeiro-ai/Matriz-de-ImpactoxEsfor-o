@@ -1,0 +1,81 @@
+/* Notebook */
+@media (max-width: 1360px) {
+  .header-actions .btn-ghost .btn-label {
+    display: none;
+  }
+  .save-indicator {
+    display: none;
+  }
+}
+
+@media (max-width: 1180px) {
+  .app-header,
+  .indicators {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .workspace {
+    grid-template-columns: 290px minmax(0, 1fr);
+    gap: 12px;
+    padding: 0 16px 16px;
+  }
+  .indicators {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .kpi {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px 8px 14px;
+  }
+  .kpi-value {
+    font-size: 20px;
+  }
+  .header-actions .btn-label {
+    display: none;
+  }
+  .header-actions .btn {
+    padding: 0 10px;
+  }
+}
+
+/* Tablet em retrato: painel acima da matriz, página com rolagem */
+@media (max-width: 860px) {
+  .app {
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+  }
+  .brand h1 {
+    font-size: 13px;
+  }
+  .workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sidebar {
+    max-height: 46vh;
+  }
+  .matrix-panel {
+    min-height: 620px;
+  }
+  .panel-hint {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .indicators {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .form-grid,
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+  .span-2 {
+    grid-column: auto;
+  }
+  .classification-strip {
+    grid-template-columns: 1fr 1fr;
+  }
+}

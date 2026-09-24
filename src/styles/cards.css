@@ -1,0 +1,257 @@
+/* Cores de destaque por quadrante (cards, etiquetas e pontos) */
+.q-quick-wins {
+  --q-accent: var(--q-quick);
+  --q-soft: var(--q-quick-strong);
+}
+.q-strategic {
+  --q-accent: var(--q-strategic);
+  --q-soft: var(--q-strategic-strong);
+}
+.q-incremental {
+  --q-accent: var(--q-incremental);
+  --q-soft: var(--q-incremental-strong);
+}
+.q-low-priority {
+  --q-accent: var(--q-low);
+  --q-soft: var(--q-low-strong);
+}
+.q-none {
+  --q-accent: var(--muted);
+  --q-soft: #eef1f5;
+}
+
+.q-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--q-soft);
+  color: var(--q-accent);
+  font-size: 11px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.q-dot {
+  width: 8px;
+  height: 8px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--q-accent);
+}
+
+/* ---- Card do painel lateral ---- */
+.side-card {
+  display: flex;
+  gap: 6px;
+  padding: 11px 12px 11px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
+  cursor: grab;
+  touch-action: manipulation;
+  user-select: none;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s,
+    transform 0.15s,
+    opacity 0.15s;
+}
+
+.side-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+.side-card:hover .side-card-grip {
+  color: var(--muted);
+}
+
+.side-card-grip {
+  display: grid;
+  place-items: center;
+  color: #c2c8d1;
+  transition: color 0.15s;
+}
+
+.side-card-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.side-card-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--text);
+}
+
+.side-card-process {
+  margin-top: 2px;
+  color: var(--text-2);
+  font-size: 12.5px;
+}
+
+.side-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.side-card.is-highlighted {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px rgba(59, 111, 182, 0.15);
+  animation: card-drop 0.5s ease-out;
+}
+
+/* ---- Linha compacta de classificadas ---- */
+.classified-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 7px;
+  cursor: grab;
+  touch-action: manipulation;
+  user-select: none;
+  transition: background-color 0.12s;
+}
+
+.classified-row:hover {
+  background: var(--surface-2);
+}
+
+.classified-row-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-2);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Card posicionado na matriz ---- */
+.m-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  gap: 8px;
+  width: 184px;
+  height: 62px;
+  padding: 8px 10px 8px 8px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--q-accent);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  transition:
+    box-shadow 0.15s,
+    opacity 0.15s,
+    filter 0.15s;
+}
+
+.m-card:hover {
+  z-index: 5;
+  box-shadow: var(--shadow-md);
+}
+
+.m-card-icon {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--q-soft);
+  color: var(--q-accent);
+}
+
+.m-card-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+  flex: 1;
+}
+
+.m-card-title {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text);
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.m-card-process {
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.m-card.is-dimmed {
+  opacity: 0.28;
+  filter: grayscale(0.6);
+}
+
+.m-card.is-highlighted {
+  z-index: 6;
+  animation: card-drop 0.5s ease-out;
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--q-accent) 22%, transparent),
+    var(--shadow-md);
+}
+
+@keyframes card-drop {
+  0% {
+    scale: 1.06;
+  }
+  60% {
+    scale: 0.98;
+  }
+  100% {
+    scale: 1;
+  }
+}
+
+/* Original deixado para trás durante o arraste */
+.is-ghost {
+  opacity: 0.35;
+  border-style: dashed !important;
+  box-shadow: none !important;
+}
+
+/* Card “levantado” que acompanha o ponteiro */
+.is-lifted {
+  position: relative;
+  cursor: grabbing;
+  box-shadow: var(--shadow-lg);
+  rotate: 1.5deg;
+  scale: 1.03;
+}
+
+.side-card.is-lifted {
+  width: 100%;
+  border-color: var(--border-strong);
+}
+
+.preview-center {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}

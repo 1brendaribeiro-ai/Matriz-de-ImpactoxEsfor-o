@@ -1,0 +1,130 @@
+import Papa from 'papaparse'
+import { normalize } from '../domain/filters'
+import type { ImprovementInput } from '../domain/types'
+
+export interface ImportResult {
+  items: ImprovementInput[]
+  skipped: number
+  /** Colunas reconhecidas, na forma "Coluna do arquivo → campo" */
+  mappedColumns: string[]
+  missingNameColumn: boolean
+}
+
+type Field = keyof ImprovementInput
+
+const COLUMN_ALIASES: Record<Field, string[]> = {
+  name: ['melhoria', 'nome', 'nome da melhoria', 'titulo', 'oportunidade', 'oportunidade de melhoria'],
+  description: ['descricao', 'descricao da melhoria', 'detalhamento'],
+  process: ['processo', 'processo de trabalho'],
+  category: ['categoria', 'tipo'],
+  owner: ['responsavel', 'dono', 'responsaveis'],
+  notes: ['observacoes', 'observacao', 'obs', 'comentarios'],
+}
+
+export const FIELD_LABELS: Record<Field, string> = {
+  name: 'Melhoria',
+  description: 'Descrição',
+  process: 'Processo',
+  category: 'Categoria',
+  owner: 'Responsável',
+  notes: 'Observações',
+}
+
+function matchField(header: string): Field | null {
+  const h = normalize(header).replace(/[:*]/g, '').trim()
+  for (const [field, aliases] of Object.entries(COLUMN_ALIASES) as [Field, string[]][]) {
+    if (aliases.includes(h)) return field
+  }
+  return null
+}
+
+function cellToString(value: unknown): string {
+  if (value === null || value === undefined) return ''
+  if (value instanceof Date) return value.toLocaleDateString('pt-BR')
+  return String(value).trim()
+}
+
+/** Converte uma tabela (primeira linha = cabeçalho) em melhorias. */
+export function rowsToImprovements(rows: unknown[][]): ImportResult {
+  const headerIndex = rows.findIndex((r) => r.some((c) => cellToString(c) !== ''))
+  if (headerIndex < 0) return { items: [], skipped: 0, mappedColumns: [], missingNameColumn: true }
+
+  const header = rows[headerIndex].map(cellToString)
+  const mapping = new Map<number, Field>()
+  header.forEach((h, idx) => {
+    const field = matchField(h)
+    if (field && ![...mapping.values()].includes(field)) mapping.set(idx, field)
+  })
+
+  const missingNameColumn = ![...mapping.values()].includes('name')
+  const items: ImprovementInput[] = []
+  let skipped = 0
+
+  for (const row of rows.slice(headerIndex + 1)) {
+    if (!row || row.every((c) => cellToString(c) === '')) continue
+    const input: ImprovementInput = { name: '', description: '', process: '', category: '', owner: '', notes: '' }
+    mapping.forEach((field, idx) => {
+      input[field] = cellToString(row[idx])
+    })
+    if (!input.name) {
+      skipped++
+      continue
+    }
+    items.push(input)
+  }
+
+  return {
+    items,
+    skipped,
+    missingNameColumn,
+    mappedColumns: [...mapping.entries()].map(([idx, field]) => `${header[idx]} → ${FIELD_LABELS[field]}`),
+  }
+}
+
+/** Lê CSV tentando UTF-8 e, se houver caracteres inválidos, Windows-1252 (padrão do Excel em PT-BR). */
+async function readCsvText(file: File): Promise<string> {
+  const buffer = await file.arrayBuffer()
+  const utf8 = new TextDecoder('utf-8').decode(buffer)
+  if (!utf8.includes('�')) return utf8.replace(/^﻿/, '')
+  return new TextDecoder('windows-1252').decode(buffer)
+}
+
+export async function parseImportFile(file: File): Promise<ImportResult> {
+  const name = file.name.toLowerCase()
+  if (name.endsWith('.csv') || name.endsWith('.txt') || file.type === 'text/csv') {
+    const text = await readCsvText(file)
+    const parsed = Papa.parse<string[]>(text, { skipEmptyLines: 'greedy' })
+    return rowsToImprovements(parsed.data)
+  }
+  if (name.endsWith('.xlsx')) {
+    const { readSheet } = await import('read-excel-file/browser')
+    const rows = await readSheet(file)
+    return rowsToImprovements(rows as unknown[][])
+  }
+  throw new Error('Formato não suportado. Use um arquivo .csv ou .xlsx.')
+}
+
+export function downloadTemplate(): void {
+  const header = Object.values(FIELD_LABELS).join(';')
+  const example = [
+    'Padronizar comunicação',
+    'Criar modelos únicos de mensagens',
+    'Controle de Frequência',
+    'Comunicação',
+    'Ana Souza',
+    '',
+  ].join(';')
+  const blob = new Blob(['﻿' + header + '\r\n' + example + '\r\n'], { type: 'text/csv;charset=utf-8' })
+  triggerDownload(blob, 'modelo-importacao-melhorias.csv')
+}
+
+export function triggerDownload(blob: Blob, fileName: string): void {
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = fileName
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
