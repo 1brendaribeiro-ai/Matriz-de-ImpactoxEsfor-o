@@ -88,7 +88,7 @@ export function ImportModal({ onImport, onClose }: ImportModalProps) {
       >
         {loading ? <LoaderCircle size={26} className="spin" /> : <FileUp size={26} />}
         <strong>{fileName || 'Arraste o arquivo aqui ou clique para selecionar'}</strong>
-        <small>Colunas: Melhoria, Descrição, Processo, Categoria, Responsável, Observações</small>
+        <small>Colunas: Melhoria, Descrição, Processo, Categoria, Observações</small>
         <input
           ref={inputRef}
           type="file"
@@ -118,6 +118,12 @@ export function ImportModal({ onImport, onClose }: ImportModalProps) {
             </span>
           </div>
           <div className="import-columns">Colunas reconhecidas: {result.mappedColumns.join(' · ')}</div>
+          {result.unknownCategories > 0 && (
+            <div className="import-columns" data-testid="import-unknown-categories">
+              {result.unknownCategories} linha(s) com categoria fora da lista serão importadas como “Outros” (o texto
+              original fica nas Observações).
+            </div>
+          )}
           <div className="table-wrap">
             <table className="data-table">
               <thead>
@@ -125,7 +131,6 @@ export function ImportModal({ onImport, onClose }: ImportModalProps) {
                   <th>Melhoria</th>
                   <th>Processo</th>
                   <th>Categoria</th>
-                  <th>Responsável</th>
                 </tr>
               </thead>
               <tbody>
@@ -134,7 +139,6 @@ export function ImportModal({ onImport, onClose }: ImportModalProps) {
                     <td>{item.name}</td>
                     <td>{item.process}</td>
                     <td>{item.category}</td>
-                    <td>{item.owner}</td>
                   </tr>
                 ))}
               </tbody>

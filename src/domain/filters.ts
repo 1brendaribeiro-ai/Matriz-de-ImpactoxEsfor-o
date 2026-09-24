@@ -1,24 +1,25 @@
-import { quadrantOf } from './quadrants'
 import type { Filters, Improvement } from './types'
 
 export const EMPTY_FILTERS: Filters = {
   search: '',
   process: '',
   category: '',
-  owner: '',
   status: 'all',
 }
+
+// marcas de acentuação (U+0300–U+036F); escrito como texto para não gerar caracteres especiais no build
+const DIACRITICS = new RegExp('[\\u0300-\\u036f]', 'g')
 
 export function normalize(text: string): string {
   return text
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(DIACRITICS, '')
     .toLowerCase()
     .trim()
 }
 
 export function hasActiveFilters(f: Filters): boolean {
-  return Boolean(f.search.trim() || f.process || f.category || f.owner || f.status !== 'all')
+  return Boolean(f.search.trim() || f.process || f.category || f.status !== 'all')
 }
 
 export function matchesFilters(item: Improvement, f: Filters): boolean {
@@ -29,18 +30,13 @@ export function matchesFilters(item: Improvement, f: Filters): boolean {
   }
   if (f.process && item.process !== f.process) return false
   if (f.category && item.category !== f.category) return false
-  if (f.owner && item.owner !== f.owner) return false
-  if (f.status !== 'all') {
-    const q = quadrantOf(item)
-    if (f.status === 'unclassified' && q) return false
-    if (f.status === 'classified' && !q) return false
-    if (f.status !== 'unclassified' && f.status !== 'classified' && q !== f.status) return false
-  }
+  if (f.status === 'unclassified' && item.position) return false
+  if (f.status === 'classified' && !item.position) return false
   return true
 }
 
 /** Valores distintos e não vazios de um campo, em ordem alfabética. */
-export function distinctValues(items: Improvement[], key: 'process' | 'category' | 'owner'): string[] {
+export function distinctValues(items: Improvement[], key: 'process' | 'category'): string[] {
   const set = new Set(items.map((i) => i[key].trim()).filter(Boolean))
   return [...set].sort((a, b) => a.localeCompare(b, 'pt-BR'))
 }

@@ -31,8 +31,8 @@ interface DragState {
   activeId: string | null
   source: DragSource | null
   target: DropTarget
-  /** true logo após soltar um card, para não abrir detalhes por engano */
-  shouldIgnoreClick: () => boolean
+  /** true logo após soltar este card, para não abrir os detalhes por engano */
+  shouldIgnoreClick: (itemId: string) => boolean
 }
 
 const DragStateContext = createContext<DragState>({
@@ -73,7 +73,7 @@ export function MatrixDnd({ items, boardRef, sidebarRef, onDropOnBoard, onDropOn
   const [active, setActive] = useState<DragData | null>(null)
   const [target, setTarget] = useState<DropTarget>(null)
   const startPointer = useRef<PixelPoint | null>(null)
-  const lastDropAt = useRef(0)
+  const lastDrop = useRef({ itemId: '', at: 0 })
 
   const sensors = useSensors(
     // pequena distância mínima: um clique simples continua abrindo os detalhes
@@ -143,23 +143,26 @@ export function MatrixDnd({ items, boardRef, sidebarRef, onDropOnBoard, onDropOn
     })
   }
 
-  const finish = () => {
+  const finish = (itemId = '') => {
     setActive(null)
     setTarget(null)
     startPointer.current = null
-    lastDropAt.current = Date.now()
+    lastDrop.current = { itemId, at: Date.now() }
   }
 
   const handleEnd = (event: DragEndEvent) => {
     const data = event.active.data.current as DragData | undefined
     const dest = resolveTarget(event)
-    finish()
+    finish(data?.itemId)
     if (!data || !dest) return
     if (dest.kind === 'board') onDropOnBoard(data.itemId, dest.position, dest.quadrant)
     else if (dest.kind === 'sidebar') onDropOnSidebar(data.itemId)
   }
 
-  const shouldIgnoreClick = useCallback(() => Date.now() - lastDropAt.current < 250, [])
+  const shouldIgnoreClick = useCallback(
+    (itemId: string) => lastDrop.current.itemId === itemId && Date.now() - lastDrop.current.at < 250,
+    [],
+  )
   const activeItem = active ? items.find((i) => i.id === active.itemId) : undefined
 
   return (
@@ -172,7 +175,7 @@ export function MatrixDnd({ items, boardRef, sidebarRef, onDropOnBoard, onDropOn
         onDragStart={handleStart}
         onDragMove={handleMove}
         onDragEnd={handleEnd}
-        onDragCancel={finish}
+        onDragCancel={(event) => finish((event.active.data.current as DragData | undefined)?.itemId)}
       >
         {children}
         <DragOverlay dropAnimation={null} zIndex={1000}>

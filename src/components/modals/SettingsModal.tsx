@@ -1,13 +1,8 @@
-import { ArchiveRestore, Database, Download, Plus, RotateCcw, Trash2, Upload, X } from 'lucide-react'
-import { useRef, useState, type FormEvent } from 'react'
-import type { Improvement } from '../../domain/types'
+import { ArchiveRestore, Database, Download, RotateCcw, Trash2, Upload, WifiOff } from 'lucide-react'
+import { useRef } from 'react'
 import { Modal } from '../common/Modal'
 
 interface SettingsModalProps {
-  categories: string[]
-  items: Improvement[]
-  onAddCategory: (name: string) => void
-  onRemoveCategory: (name: string) => void
   onRestoreSample: () => void
   onClearAll: () => void
   onBackup: () => void
@@ -16,52 +11,17 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal(props: SettingsModalProps) {
-  const { categories, items } = props
-  const [name, setName] = useState('')
   const backupRef = useRef<HTMLInputElement>(null)
-  const usage = (c: string) => items.filter((i) => i.category === c).length
-
-  const add = (e: FormEvent) => {
-    e.preventDefault()
-    if (!name.trim()) return
-    props.onAddCategory(name.trim())
-    setName('')
-  }
 
   return (
     <Modal title="Configurações" onClose={props.onClose} size="lg" testId="settings-modal">
       <section className="settings-section">
-        <h3>Categorias</h3>
-        <p className="muted">Usadas no cadastro e nos filtros. Remover uma categoria não altera as melhorias que já a utilizam.</p>
-        <form className="inline-form" onSubmit={add}>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Nova categoria"
-            aria-label="Nome da nova categoria"
-            data-testid="settings-category-input"
-          />
-          <button type="submit" className="btn btn-secondary" disabled={!name.trim()} data-testid="settings-category-add">
-            <Plus size={15} /> Adicionar
-          </button>
-        </form>
-        <ul className="category-list" data-testid="category-list">
-          {categories.map((c) => (
-            <li key={c} className="category-chip">
-              <span>{c}</span>
-              <small>{usage(c)}</small>
-              <button type="button" onClick={() => props.onRemoveCategory(c)} aria-label={`Remover categoria ${c}`}>
-                <X size={13} />
-              </button>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className="settings-section">
         <h3>Dados</h3>
         <p className="muted">
-          <Database size={13} /> Os dados ficam salvos neste navegador (armazenamento local) e são gravados automaticamente.
+          <Database size={13} /> Os dados ficam salvos neste dispositivo (IndexedDB do navegador) e são gravados automaticamente.
+        </p>
+        <p className="muted">
+          <WifiOff size={13} /> A aplicação funciona sem internet, inclusive a exportação para PDF, Excel e PNG.
         </p>
         <div className="settings-actions">
           <button type="button" className="btn btn-ghost" onClick={props.onBackup}>

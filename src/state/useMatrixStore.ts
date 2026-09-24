@@ -6,7 +6,7 @@ import { historyReducer, type MatrixAction } from './matrixReducer'
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error'
 
-const EMPTY: MatrixData = { version: 1, items: [], categories: [] }
+const EMPTY: MatrixData = { version: 2, items: [] }
 const AUTOSAVE_DELAY = 400
 
 export function useMatrixStore(repository: MatrixRepository) {
@@ -59,7 +59,7 @@ export function useMatrixStore(repository: MatrixRepository) {
   // Garante a gravação ao fechar a aba antes do fim do intervalo do autosave.
   useEffect(() => {
     if (!loaded) return
-    const flush = () => void repository.save(dataRef.current)
+    const flush = () => (repository.saveSync ? repository.saveSync(dataRef.current) : void repository.save(dataRef.current))
     window.addEventListener('beforeunload', flush)
     return () => window.removeEventListener('beforeunload', flush)
   }, [loaded, repository])

@@ -1,6 +1,5 @@
 import { ArrowRight, ArrowUp, Hand } from 'lucide-react'
 import { useMemo, type RefObject } from 'react'
-import { countByQuadrant } from '../../domain/quadrants'
 import type { Improvement } from '../../domain/types'
 import { useElementSize } from '../../hooks/useElementSize'
 import { MatrixCard } from '../cards/MatrixCard'
@@ -46,7 +45,6 @@ export function Matrix({ items, isVisible, filtersActive, highlightedId, boardRe
   const size = useElementSize(boardRef)
   const { target, activeId } = useDragState()
   const placed = useMemo(() => items.filter((i) => i.position), [items])
-  const counts = useMemo(() => countByQuadrant(items), [items])
   const visibleCount = placed.filter(isVisible).length
   const activeQuadrant = target?.kind === 'board' ? target.quadrant : null
 
@@ -56,8 +54,7 @@ export function Matrix({ items, isVisible, filtersActive, highlightedId, boardRe
         <div>
           <h2 className="panel-title">Matriz de Impacto x Esforço</h2>
           <p className="panel-hint">
-            <Hand size={13} /> Arraste as melhorias do painel para o quadrante desejado. A posição define impacto e
-            esforço.
+            <Hand size={13} /> Arraste as melhorias do painel para a matriz. A posição do card define impacto e esforço.
           </p>
         </div>
         {filtersActive && (
@@ -69,7 +66,7 @@ export function Matrix({ items, isVisible, filtersActive, highlightedId, boardRe
 
       <MatrixFrame>
         <div ref={boardRef} className="board" data-testid="board">
-          <QuadrantLayer counts={counts} activeQuadrant={activeQuadrant} dragging={activeId !== null} />
+          <QuadrantLayer activeQuadrant={activeQuadrant} dragging={activeId !== null} />
           <div className="board-center-mark" aria-hidden="true" />
           {size.width > 0 && (
             <div className="card-layer">
@@ -93,7 +90,7 @@ export function Matrix({ items, isVisible, filtersActive, highlightedId, boardRe
             </div>
           )}
           {placed.length === 0 && activeId === null && (
-            <div className="board-empty">Arraste uma melhoria do painel lateral para começar a priorizar.</div>
+            <div className="board-empty">Arraste uma melhoria do painel lateral para começar a classificar.</div>
           )}
         </div>
       </MatrixFrame>

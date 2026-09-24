@@ -1,4 +1,4 @@
-import { levelsOf, quadrantOf, QUADRANTS } from '../domain/quadrants'
+import { levelsOf } from '../domain/quadrants'
 import type { Improvement } from '../domain/types'
 import { triggerDownload } from './importer'
 
@@ -8,17 +8,14 @@ function stamp(): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}`
 }
 
-/** Ordena por prioridade do quadrante (não classificadas por último) e nome. */
+/** Ordena por nome, com as não classificadas por último (sem interpretar os quadrantes). */
 export function sortForReport(items: Improvement[]): Improvement[] {
-  const rank = (i: Improvement) => {
-    const q = quadrantOf(i)
-    return q ? QUADRANTS[q].priority : 99
-  }
-  return [...items].sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, 'pt-BR'))
+  return [...items].sort(
+    (a, b) => Number(!a.position) - Number(!b.position) || a.name.localeCompare(b.name, 'pt-BR'),
+  )
 }
 
 export function reportRow(item: Improvement) {
-  const q = quadrantOf(item)
   const { impact, effort } = levelsOf(item)
   return {
     name: item.name,
@@ -26,8 +23,7 @@ export function reportRow(item: Improvement) {
     category: item.category,
     impact: impact ?? '—',
     effort: effort ?? '—',
-    quadrant: q ? QUADRANTS[q].title : 'Não classificada',
-    owner: item.owner,
+    status: item.position ? 'Classificada' : 'Não classificada',
     description: item.description,
     notes: item.notes,
   }
@@ -41,8 +37,7 @@ export async function exportExcel(items: Improvement[]): Promise<void> {
     'Categoria',
     'Impacto',
     'Esforço',
-    'Quadrante',
-    'Responsável',
+    'Situação',
     'Descrição',
     'Observações',
   ]
@@ -54,13 +49,13 @@ export async function exportExcel(items: Improvement[]): Promise<void> {
   }))
   const rows = sortForReport(items).map((item) => {
     const r = reportRow(item)
-    return [r.name, r.process, r.category, r.impact, r.effort, r.quadrant, r.owner, r.description, r.notes].map(
+    return [r.name, r.process, r.category, r.impact, r.effort, r.status, r.description, r.notes].map(
       (value) => ({ value, type: String, wrap: true }),
     )
   })
   await writeXlsxFile([headerRow, ...rows], {
     sheet: 'Matriz',
-    columns: [{ width: 40 }, { width: 26 }, { width: 18 }, { width: 10 }, { width: 10 }, { width: 24 }, { width: 22 }, { width: 50 }, { width: 40 }],
+    columns: [{ width: 40 }, { width: 26 }, { width: 34 }, { width: 10 }, { width: 10 }, { width: 18 }, { width: 50 }, { width: 40 }],
     stickyRowsCount: 1,
   }).toFile(`matriz-impacto-esforco_${stamp()}.xlsx`)
 }
@@ -102,7 +97,7 @@ export async function exportPdf(node: HTMLElement, items: Improvement[]): Promis
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(13)
   doc.setTextColor(31, 42, 68)
-  doc.text('Relação de melhorias priorizadas', margin, 16)
+  doc.text('Relação das melhorias', margin, 16)
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
   doc.setTextColor(100, 110, 125)
@@ -110,15 +105,15 @@ export async function exportPdf(node: HTMLElement, items: Improvement[]): Promis
   autoTable(doc, {
     startY: 26,
     margin: { left: margin, right: margin },
-    head: [['Melhoria', 'Processo', 'Categoria', 'Impacto', 'Esforço', 'Quadrante', 'Responsável']],
+    head: [['Melhoria', 'Processo', 'Categoria', 'Impacto', 'Esforço', 'Situação']],
     body: sortForReport(items).map((i) => {
       const r = reportRow(i)
-      return [r.name, r.process, r.category, r.impact, r.effort, r.quadrant, r.owner]
+      return [r.name, r.process, r.category, r.impact, r.effort, r.status]
     }),
     styles: { fontSize: 8.5, cellPadding: 2.2, textColor: [40, 48, 62], lineColor: [226, 230, 236], lineWidth: 0.2 },
     headStyles: { fillColor: [31, 42, 68], textColor: 255, fontStyle: 'bold' },
     alternateRowStyles: { fillColor: [247, 248, 250] },
-    columnStyles: { 0: { cellWidth: 70 } },
+    columnStyles: { 0: { cellWidth: 72 }, 2: { cellWidth: 58 } },
   })
   doc.save(`matriz-impacto-esforco_${stamp()}.pdf`)
 }

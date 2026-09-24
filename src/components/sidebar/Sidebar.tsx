@@ -1,6 +1,5 @@
 import { Inbox, Plus, Undo2, Upload } from 'lucide-react'
 import { forwardRef } from 'react'
-import { quadrantOf, QUADRANTS } from '../../domain/quadrants'
 import type { Filters, Improvement } from '../../domain/types'
 import { ClassifiedRow, SidebarCard } from '../cards/SidebarCard'
 import { useDragState } from '../dnd/MatrixDnd'
@@ -9,7 +8,6 @@ import { SearchFilters } from './SearchFilters'
 
 interface SidebarProps {
   items: Improvement[]
-  categories: string[]
   filters: Filters
   isVisible: (item: Improvement) => boolean
   onFiltersChange: (filters: Filters) => void
@@ -20,16 +18,12 @@ interface SidebarProps {
 }
 
 export const Sidebar = forwardRef<HTMLElement, SidebarProps>(function Sidebar(
-  { items, categories, filters, isVisible, onFiltersChange, onAdd, onImport, onOpen, highlightedId },
+  { items, filters, isVisible, onFiltersChange, onAdd, onImport, onOpen, highlightedId },
   ref,
 ) {
   const { target, source } = useDragState()
   const unclassified = items.filter((i) => !i.position)
-  // lista resumida ordenada pela prioridade do quadrante e, depois, pelo nome
-  const priority = (i: Improvement) => QUADRANTS[quadrantOf(i)!].priority
-  const classified = items
-    .filter((i) => i.position)
-    .sort((a, b) => priority(a) - priority(b) || a.name.localeCompare(b.name, 'pt-BR'))
+  const classified = items.filter((i) => i.position).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
   const visibleUnclassified = unclassified.filter(isVisible)
   const visibleClassified = classified.filter(isVisible)
   const isReturnTarget = target?.kind === 'sidebar'
@@ -51,7 +45,7 @@ export const Sidebar = forwardRef<HTMLElement, SidebarProps>(function Sidebar(
             <Upload size={15} /> Importar melhorias
           </button>
         </div>
-        <SearchFilters items={items} categories={categories} filters={filters} onChange={onFiltersChange} />
+        <SearchFilters items={items} filters={filters} onChange={onFiltersChange} />
       </div>
 
       <div className="sidebar-scroll">

@@ -1,7 +1,7 @@
 import { useDraggable } from '@dnd-kit/core'
 import { GripVertical } from 'lucide-react'
 import { memo, useEffect, useRef } from 'react'
-import { quadrantOf, QUADRANTS } from '../../domain/quadrants'
+import { levelsOf } from '../../domain/quadrants'
 import type { Improvement } from '../../domain/types'
 import { CategoryIcon } from '../common/CategoryIcon'
 import { dragId, useDragState } from '../dnd/MatrixDnd'
@@ -51,7 +51,7 @@ export const SidebarCard = memo(function SidebarCard({ item, onOpen, highlighted
     if (highlighted) nodeRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
   }, [highlighted])
   const { shouldIgnoreClick } = useDragState()
-  const open = () => !shouldIgnoreClick() && onOpen(item.id)
+  const open = () => !shouldIgnoreClick(item.id) && onOpen(item.id)
 
   return (
     <div
@@ -81,8 +81,8 @@ export const ClassifiedRow = memo(function ClassifiedRow({ item, onOpen }: CardP
     data: { itemId: item.id, source: 'side' },
   })
   const { shouldIgnoreClick } = useDragState()
-  const quadrant = quadrantOf(item)
-  const open = () => !shouldIgnoreClick() && onOpen(item.id)
+  const { impact, effort } = levelsOf(item)
+  const open = () => !shouldIgnoreClick(item.id) && onOpen(item.id)
 
   return (
     <div
@@ -93,13 +93,15 @@ export const ClassifiedRow = memo(function ClassifiedRow({ item, onOpen }: CardP
       {...listeners}
       {...attributes}
       aria-roledescription="melhoria arrastável"
-      aria-label={`${item.name}, ${quadrant ? QUADRANTS[quadrant].title : ''}`}
+      aria-label={`${item.name}. Impacto ${impact}, esforço ${effort}.`}
       onClick={open}
       onKeyDown={(e) => openOnKey(e, open)}
     >
-      <span className={`q-dot q-${quadrant}`} aria-hidden="true" />
+      <span className="classified-dot" aria-hidden="true" />
       <span className="classified-row-name">{item.name}</span>
-      {quadrant && <span className={`q-tag q-${quadrant}`}>{QUADRANTS[quadrant].title}</span>}
+      <span className="classified-levels" title="Impacto / Esforço (pela posição na matriz)">
+        I: {impact} · E: {effort}
+      </span>
     </div>
   )
 })

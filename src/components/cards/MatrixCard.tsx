@@ -17,7 +17,9 @@ export function MatrixCardBody({ item }: { item: Improvement }) {
         <div className="m-card-title" title={item.name}>
           {item.name}
         </div>
-        <div className="m-card-process">{item.process || item.category || '—'}</div>
+        <div className="m-card-process" title={item.category}>
+          {item.process || item.category || '—'}
+        </div>
       </div>
     </>
   )
@@ -38,14 +40,13 @@ export const MatrixCard = memo(function MatrixCard({ item, topLeft, dimmed, high
   })
   const { shouldIgnoreClick } = useDragState()
   const quadrant = quadrantOf(item)
-  const open = () => !shouldIgnoreClick() && onOpen(item.id)
+  const open = () => !shouldIgnoreClick(item.id) && onOpen(item.id)
 
   return (
     <div
       ref={setNodeRef}
       className={[
         'm-card',
-        `q-${quadrant}`,
         isDragging && 'is-ghost',
         dimmed && 'is-dimmed',
         highlighted && 'is-highlighted',

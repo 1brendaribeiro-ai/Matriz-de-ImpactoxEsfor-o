@@ -107,7 +107,7 @@
 
 .quadrant {
   position: relative;
-  background: var(--q-tint);
+  background: var(--quadrant-bg);
   transition:
     background-color 0.18s,
     box-shadow 0.18s;
@@ -121,93 +121,14 @@
   border-bottom: 1px solid var(--border-strong);
 }
 
-.quadrant.q-quick-wins {
-  --q-accent: var(--q-quick);
-  --q-tint: var(--q-quick-tint);
-  --q-strong: var(--q-quick-strong);
-}
-.quadrant.q-strategic {
-  --q-accent: var(--q-strategic);
-  --q-tint: var(--q-strategic-tint);
-  --q-strong: var(--q-strategic-strong);
-}
-.quadrant.q-incremental {
-  --q-accent: var(--q-incremental);
-  --q-tint: var(--q-incremental-tint);
-  --q-strong: var(--q-incremental-strong);
-}
-.quadrant.q-low-priority {
-  --q-accent: var(--q-low);
-  --q-tint: var(--q-low-tint);
-  --q-strong: var(--q-low-strong);
-}
-
-.quadrant-header {
-  position: absolute;
-  top: 12px;
-  left: 14px;
-  right: 14px;
-  pointer-events: none;
-}
-
-.quadrant-axes {
-  color: var(--muted);
-  font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-}
-
-.quadrant-title-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 1px;
-}
-
-.quadrant-title {
-  color: var(--q-accent);
-  font-size: 14px;
-  font-weight: 750;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.quadrant-count {
-  min-width: 22px;
-  padding: 0 7px;
-  border-radius: 999px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text-2);
-  font-size: 11.5px;
-  font-weight: 650;
-  line-height: 18px;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-}
-
-.quadrant-action {
-  display: inline-block;
-  margin-top: 3px;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.quadrant-action::before {
-  content: '→ ';
-  color: var(--q-accent);
-}
-
 /* Destaques durante o arraste */
 .quadrant.is-dragging {
-  background: color-mix(in srgb, var(--q-tint) 70%, white);
+  background: var(--surface);
 }
 
 .quadrant.is-drop-target {
-  background: var(--q-strong);
-  box-shadow: inset 0 0 0 2px var(--q-accent);
+  background: var(--quadrant-drop);
+  box-shadow: inset 0 0 0 2px var(--focus);
 }
 
 .drop-hint {
@@ -219,7 +140,7 @@
   gap: 6px;
   padding: 5px 12px;
   border-radius: 999px;
-  background: var(--q-accent);
+  background: var(--focus);
   color: #fff;
   font-size: 12px;
   font-weight: 650;
@@ -268,7 +189,7 @@
   color: var(--muted);
   font-size: 13px;
   text-align: center;
-  transform: translate(-50%, calc(-50% + 40px));
+  transform: translate(-50%, calc(-50% + 60px));
   pointer-events: none;
 }
 
@@ -278,9 +199,9 @@
   left: 0;
   width: 184px;
   height: 62px;
-  border: 1.5px dashed var(--q-accent);
+  border: 1.5px dashed var(--focus);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--q-accent) 8%, transparent);
+  background: rgba(59, 111, 182, 0.08);
   pointer-events: none;
 }
 

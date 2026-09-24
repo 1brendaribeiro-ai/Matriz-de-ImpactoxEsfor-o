@@ -9,18 +9,16 @@ import { ExportStage } from './components/matrix/ExportStage'
 import { Matrix } from './components/matrix/Matrix'
 import { DetailsModal } from './components/modals/DetailsModal'
 import { ImportModal } from './components/modals/ImportModal'
-import { ImprovementFormModal, type PlacementChoice } from './components/modals/ImprovementFormModal'
+import { ImprovementFormModal } from './components/modals/ImprovementFormModal'
 import { SettingsModal } from './components/modals/SettingsModal'
 import { Sidebar } from './components/sidebar/Sidebar'
 import { distinctValues, EMPTY_FILTERS, hasActiveFilters, matchesFilters } from './domain/filters'
-import { findFreeSpot, quadrantOf, QUADRANTS } from './domain/quadrants'
 import { newId } from './domain/id'
 import { createSeedData } from './domain/seed'
-import type { Filters, Improvement, ImprovementInput, Position, QuadrantId } from './domain/types'
+import type { Filters, Improvement, ImprovementInput, Position } from './domain/types'
 import { exportBackup, exportExcel, exportPdf, exportPng } from './io/exporter'
 import { useMatrixStore } from './state/useMatrixStore'
-import { repository } from './storage'
-import { parseMatrixData } from './storage/localStorageRepository'
+import { parseMatrixData, repository, requestPersistentStorage } from './storage'
 
 type ModalState =
   | { kind: 'form'; itemId?: string }
@@ -56,6 +54,10 @@ export default function App() {
   const exportRef = useRef<HTMLDivElement>(null)
 
   const items = data.items
+
+  useEffect(() => {
+    requestPersistentStorage()
+  }, [])
   const findItem = useCallback((id: string) => items.find((i) => i.id === id), [items])
   const isVisible = useCallback((item: Improvement) => matchesFilters(item, filters), [filters])
   const filtersActive = hasActiveFilters(filters)
@@ -82,18 +84,15 @@ export default function App() {
   // ---- Arrastar e soltar ---------------------------------------------------
 
   const handleDropOnBoard = useCallback(
-    (itemId: string, position: Position, quadrant: QuadrantId) => {
+    (itemId: string, position: Position) => {
       const item = findItem(itemId)
       if (!item) return
-      const before = quadrantOf(item)
+      const wasClassified = item.position !== null
       dispatch({ type: 'move', id: itemId, position })
       flash(itemId)
-      if (before !== quadrant) {
-        const verb = before ? 'movida para' : 'classificada em'
-        toast(`“${item.name}” ${verb} ${QUADRANTS[quadrant].title}`, {
-          action: { label: 'Desfazer', onClick: store.undo },
-        })
-      }
+      toast(wasClassified ? `“${item.name}” reposicionada` : `“${item.name}” posicionada na matriz`, {
+        action: { label: 'Desfazer', onClick: store.undo },
+      })
     },
     [dispatch, findItem, flash, toast, store.undo],
   )
@@ -113,29 +112,19 @@ export default function App() {
 
   // ---- CRUD ----------------------------------------------------------------
 
-  const placementToPosition = (choice: PlacementChoice, current?: Improvement): Position | null | undefined => {
-    if (choice === 'none') return current?.position ? null : undefined
-    if (current && quadrantOf(current) === choice) return undefined
-    return findFreeSpot(choice, items, current?.id)
-  }
-
-  const handleSubmitForm = (input: ImprovementInput, placement: PlacementChoice) => {
+  const handleSubmitForm = (input: ImprovementInput) => {
     if (modal?.kind !== 'form') return
     const current = modal.itemId ? findItem(modal.itemId) : undefined
     if (current) {
-      dispatch({ type: 'update', id: current.id, input, position: placementToPosition(placement, current) })
+      dispatch({ type: 'update', id: current.id, input })
       setModal({ kind: 'details', itemId: current.id })
       toast('Melhoria atualizada')
     } else {
       const id = newId()
-      dispatch({ type: 'add', id, input, position: placementToPosition(placement) ?? null })
+      dispatch({ type: 'add', id, input })
       setModal(null)
       flash(id)
-      toast(
-        placement === 'none'
-          ? `“${input.name.trim()}” adicionada. Arraste-a para a matriz.`
-          : `“${input.name.trim()}” adicionada em ${QUADRANTS[placement].title}`,
-      )
+      toast(`“${input.name.trim()}” adicionada. Arraste-a para a matriz.`)
     }
   }
 
@@ -249,7 +238,6 @@ export default function App() {
   // ---- Render --------------------------------------------------------------
 
   const processes = useMemo(() => distinctValues(items, 'process'), [items])
-  const owners = useMemo(() => distinctValues(items, 'owner'), [items])
   const openDetails = useCallback((id: string) => setModal({ kind: 'details', itemId: id }), [])
   const detailsItem = modal?.kind === 'details' ? findItem(modal.itemId) : undefined
   const formItem = modal?.kind === 'form' && modal.itemId ? findItem(modal.itemId) : undefined
@@ -290,7 +278,6 @@ export default function App() {
           <Sidebar
             ref={sidebarRef}
             items={items}
-            categories={data.categories}
             filters={filters}
             isVisible={isVisible}
             onFiltersChange={setFilters}
@@ -313,9 +300,7 @@ export default function App() {
       {modal?.kind === 'form' && (
         <ImprovementFormModal
           item={formItem}
-          categories={data.categories}
           processes={processes}
-          owners={owners}
           onSubmit={handleSubmitForm}
           onClose={() => setModal(formItem ? { kind: 'details', itemId: formItem.id } : null)}
         />
@@ -349,10 +334,6 @@ export default function App() {
 
       {modal?.kind === 'settings' && (
         <SettingsModal
-          categories={data.categories}
-          items={items}
-          onAddCategory={(name) => dispatch({ type: 'addCategory', name })}
-          onRemoveCategory={(name) => dispatch({ type: 'removeCategory', name })}
           onRestoreSample={() => setConfirm({ kind: 'sample' })}
           onClearAll={() => setConfirm({ kind: 'clear' })}
           onBackup={() => exportBackup(data)}

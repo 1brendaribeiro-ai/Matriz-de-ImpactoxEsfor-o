@@ -1,4 +1,5 @@
 import Papa from 'papaparse'
+import { DEFAULT_CATEGORY, matchCategory } from '../domain/categories'
 import { normalize } from '../domain/filters'
 import type { ImprovementInput } from '../domain/types'
 
@@ -8,6 +9,8 @@ export interface ImportResult {
   /** Colunas reconhecidas, na forma "Coluna do arquivo → campo" */
   mappedColumns: string[]
   missingNameColumn: boolean
+  /** Linhas cuja categoria não está na lista e foi importada como "Outros" */
+  unknownCategories: number
 }
 
 type Field = keyof ImprovementInput
@@ -17,7 +20,6 @@ const COLUMN_ALIASES: Record<Field, string[]> = {
   description: ['descricao', 'descricao da melhoria', 'detalhamento'],
   process: ['processo', 'processo de trabalho'],
   category: ['categoria', 'tipo'],
-  owner: ['responsavel', 'dono', 'responsaveis'],
   notes: ['observacoes', 'observacao', 'obs', 'comentarios'],
 }
 
@@ -26,7 +28,6 @@ export const FIELD_LABELS: Record<Field, string> = {
   description: 'Descrição',
   process: 'Processo',
   category: 'Categoria',
-  owner: 'Responsável',
   notes: 'Observações',
 }
 
@@ -47,7 +48,7 @@ function cellToString(value: unknown): string {
 /** Converte uma tabela (primeira linha = cabeçalho) em melhorias. */
 export function rowsToImprovements(rows: unknown[][]): ImportResult {
   const headerIndex = rows.findIndex((r) => r.some((c) => cellToString(c) !== ''))
-  if (headerIndex < 0) return { items: [], skipped: 0, mappedColumns: [], missingNameColumn: true }
+  if (headerIndex < 0) return { items: [], skipped: 0, mappedColumns: [], missingNameColumn: true, unknownCategories: 0 }
 
   const header = rows[headerIndex].map(cellToString)
   const mapping = new Map<number, Field>()
@@ -59,16 +60,28 @@ export function rowsToImprovements(rows: unknown[][]): ImportResult {
   const missingNameColumn = ![...mapping.values()].includes('name')
   const items: ImprovementInput[] = []
   let skipped = 0
+  let unknownCategories = 0
 
   for (const row of rows.slice(headerIndex + 1)) {
     if (!row || row.every((c) => cellToString(c) === '')) continue
-    const input: ImprovementInput = { name: '', description: '', process: '', category: '', owner: '', notes: '' }
+    const input: ImprovementInput = { name: '', description: '', process: '', category: '', notes: '' }
     mapping.forEach((field, idx) => {
       input[field] = cellToString(row[idx])
     })
     if (!input.name) {
       skipped++
       continue
+    }
+    // Apenas as categorias da lista fechada são aceitas; o texto original é preservado nas observações.
+    const category = matchCategory(input.category)
+    if (!category) {
+      if (input.category) {
+        unknownCategories++
+        input.notes = [input.notes, `Categoria original: ${input.category}`].filter(Boolean).join('\n')
+      }
+      input.category = DEFAULT_CATEGORY
+    } else {
+      input.category = category
     }
     items.push(input)
   }
@@ -77,6 +90,7 @@ export function rowsToImprovements(rows: unknown[][]): ImportResult {
     items,
     skipped,
     missingNameColumn,
+    unknownCategories,
     mappedColumns: [...mapping.entries()].map(([idx, field]) => `${header[idx]} → ${FIELD_LABELS[field]}`),
   }
 }
@@ -111,8 +125,7 @@ export function downloadTemplate(): void {
     'Padronizar comunicação',
     'Criar modelos únicos de mensagens',
     'Controle de Frequência',
-    'Comunicação',
-    'Ana Souza',
+    'Fluxo de atividades, informações e documentação',
     '',
   ].join(';')
   const blob = new Blob(['﻿' + header + '\r\n' + example + '\r\n'], { type: 'text/csv;charset=utf-8' })

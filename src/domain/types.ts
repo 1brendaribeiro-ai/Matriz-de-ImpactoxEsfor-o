@@ -1,4 +1,9 @@
-export type QuadrantId = 'quick-wins' | 'strategic' | 'incremental' | 'low-priority'
+/** Identificadores técnicos dos quadrantes (usados apenas na geometria da matriz). */
+export type QuadrantId =
+  | 'high-impact-low-effort'
+  | 'high-impact-high-effort'
+  | 'low-impact-low-effort'
+  | 'low-impact-high-effort'
 
 export type Level = 'Baixo' | 'Médio' | 'Alto'
 
@@ -18,7 +23,6 @@ export interface Improvement {
   description: string
   process: string
   category: string
-  owner: string
   notes: string
   /** null = ainda não classificada */
   position: Position | null
@@ -28,21 +32,19 @@ export interface Improvement {
 
 export type ImprovementInput = Pick<
   Improvement,
-  'name' | 'description' | 'process' | 'category' | 'owner' | 'notes'
+  'name' | 'description' | 'process' | 'category' | 'notes'
 >
 
 export interface MatrixData {
-  version: 1
+  version: 2
   items: Improvement[]
-  categories: string[]
 }
 
-export type StatusFilter = 'all' | 'unclassified' | 'classified' | QuadrantId
+export type StatusFilter = 'all' | 'unclassified' | 'classified'
 
 export interface Filters {
   search: string
   process: string
   category: string
-  owner: string
   status: StatusFilter
 }

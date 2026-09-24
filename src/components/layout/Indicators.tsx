@@ -1,5 +1,3 @@
-import { useMemo } from 'react'
-import { countByQuadrant, QUADRANT_ORDER, QUADRANTS } from '../../domain/quadrants'
 import type { Improvement, StatusFilter } from '../../domain/types'
 
 interface IndicatorsProps {
@@ -8,21 +6,14 @@ interface IndicatorsProps {
   onSelectStatus: (status: StatusFilter) => void
 }
 
-/** Indicadores do topo. Clicar em um indicador filtra as melhorias pelo status correspondente. */
+/** Indicadores neutros do topo. Clicar em um indicador filtra as melhorias pelo status correspondente. */
 export function Indicators({ items, activeStatus, onSelectStatus }: IndicatorsProps) {
-  const counts = useMemo(() => countByQuadrant(items), [items])
-  const unclassified = items.filter((i) => !i.position).length
+  const classified = items.filter((i) => i.position).length
 
   const tiles: { status: StatusFilter; label: string; value: number; tone: string; testId: string }[] = [
     { status: 'all', label: 'Total de melhorias', value: items.length, tone: 'total', testId: 'kpi-total' },
-    { status: 'unclassified', label: 'Não classificadas', value: unclassified, tone: 'unclassified', testId: 'kpi-unclassified' },
-    ...QUADRANT_ORDER.map((id) => ({
-      status: id as StatusFilter,
-      label: QUADRANTS[id].title,
-      value: counts[id],
-      tone: id,
-      testId: `kpi-${id}`,
-    })),
+    { status: 'unclassified', label: 'Melhorias não classificadas', value: items.length - classified, tone: 'unclassified', testId: 'kpi-unclassified' },
+    { status: 'classified', label: 'Melhorias classificadas', value: classified, tone: 'classified', testId: 'kpi-classified' },
   ]
 
   return (

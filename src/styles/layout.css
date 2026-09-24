@@ -149,7 +149,7 @@
 /* ---- Indicadores ---- */
 .indicators {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   padding: 16px 24px;
 }
@@ -218,17 +218,8 @@
 .kpi-unclassified {
   --kpi-accent: #a3abb8;
 }
-.kpi-quick-wins {
-  --kpi-accent: var(--q-quick);
-}
-.kpi-strategic {
-  --kpi-accent: var(--q-strategic);
-}
-.kpi-incremental {
-  --kpi-accent: var(--q-incremental);
-}
-.kpi-low-priority {
-  --kpi-accent: var(--q-low);
+.kpi-classified {
+  --kpi-accent: var(--card-accent);
 }
 
 /* ---- Área de trabalho ---- */

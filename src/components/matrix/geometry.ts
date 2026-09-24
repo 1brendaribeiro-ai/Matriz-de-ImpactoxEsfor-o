@@ -4,8 +4,7 @@ import type { Position, QuadrantId } from '../../domain/types'
 /** Dimensões fixas do card na matriz (devem coincidir com o CSS). */
 export const CARD_W = 184
 export const CARD_H = 62
-/** Espaço reservado no topo de cada quadrante para o seu cabeçalho. */
-export const QUADRANT_HEADER_H = 66
+/** Margem interna de cada quadrante (os quadrantes não têm cabeçalho). */
 const PAD = 10
 
 export interface Size {
@@ -34,8 +33,8 @@ export function quadrantAtPixel(p: PixelPoint, size: Size): QuadrantId {
   return quadrantAt(pixelToPosition(p, size))
 }
 
-/** Mantém o centro do card dentro dos limites do quadrante, sem invadir o cabeçalho. */
-export function clampCenterToQuadrant(p: PixelPoint, quadrant: QuadrantId, size: Size): PixelPoint {
+/** Mantém o centro do card dentro dos limites do quadrante. */
+export function clampCenterToQuadrant(p: PixelPoint, quadrant: QuadrantId, size: Size, cardH = CARD_H): PixelPoint {
   const { col, row } = QUADRANTS[quadrant]
   const qw = size.width / 2
   const qh = size.height / 2
@@ -44,13 +43,13 @@ export function clampCenterToQuadrant(p: PixelPoint, quadrant: QuadrantId, size:
   const clamp = (v: number, min: number, max: number) => (min > max ? (min + max) / 2 : Math.min(max, Math.max(min, v)))
   return {
     x: clamp(p.x, left + CARD_W / 2 + PAD, left + qw - CARD_W / 2 - PAD),
-    y: clamp(p.y, top + QUADRANT_HEADER_H + CARD_H / 2, top + qh - CARD_H / 2 - PAD),
+    y: clamp(p.y, top + cardH / 2 + PAD, top + qh - cardH / 2 - PAD),
   }
 }
 
 /** Posição de renderização (canto superior esquerdo) de um card já classificado. */
-export function cardTopLeft(pos: Position, size: Size): PixelPoint {
+export function cardTopLeft(pos: Position, size: Size, cardH = CARD_H): PixelPoint {
   const quadrant = quadrantAt(pos)
-  const center = clampCenterToQuadrant(positionToPixel(pos, size), quadrant, size)
-  return { x: center.x - CARD_W / 2, y: center.y - CARD_H / 2 }
+  const center = clampCenterToQuadrant(positionToPixel(pos, size), quadrant, size, cardH)
+  return { x: center.x - CARD_W / 2, y: center.y - cardH / 2 }
 }

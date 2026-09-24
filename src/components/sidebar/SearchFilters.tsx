@@ -1,18 +1,17 @@
 import { FilterX, ListFilter, Search, X } from 'lucide-react'
 import { useState } from 'react'
 import { distinctValues, EMPTY_FILTERS, hasActiveFilters } from '../../domain/filters'
-import { QUADRANT_ORDER, QUADRANTS } from '../../domain/quadrants'
+import { CATEGORIES } from '../../domain/categories'
 import type { Filters, Improvement, StatusFilter } from '../../domain/types'
 import { loadPreference, savePreference } from '../../storage'
 
 interface SearchFiltersProps {
   items: Improvement[]
-  categories: string[]
   filters: Filters
   onChange: (filters: Filters) => void
 }
 
-export function SearchFilters({ items, categories, filters, onChange }: SearchFiltersProps) {
+export function SearchFilters({ items, filters, onChange }: SearchFiltersProps) {
   const [open, setOpen] = useState(() => loadPreference('filtersOpen', false))
   const toggle = () => {
     setOpen(!open)
@@ -21,11 +20,7 @@ export function SearchFilters({ items, categories, filters, onChange }: SearchFi
   const set = <K extends keyof Filters>(key: K, value: Filters[K]) => onChange({ ...filters, [key]: value })
 
   const processes = distinctValues(items, 'process')
-  const owners = distinctValues(items, 'owner')
-  const allCategories = [...new Set([...categories, ...distinctValues(items, 'category')])].sort((a, b) =>
-    a.localeCompare(b, 'pt-BR'),
-  )
-  const activeCount = [filters.process, filters.category, filters.owner, filters.status !== 'all'].filter(Boolean).length
+  const activeCount = [filters.process, filters.category, filters.status !== 'all'].filter(Boolean).length
 
   return (
     <div className="search-filters">
@@ -62,8 +57,7 @@ export function SearchFilters({ items, categories, filters, onChange }: SearchFi
       {open && (
         <div className="filter-grid">
           <FilterSelect label="Processo" value={filters.process} options={processes} onChange={(v) => set('process', v)} testId="filter-process" />
-          <FilterSelect label="Categoria" value={filters.category} options={allCategories} onChange={(v) => set('category', v)} testId="filter-category" />
-          <FilterSelect label="Responsável" value={filters.owner} options={owners} onChange={(v) => set('owner', v)} testId="filter-owner" />
+          <FilterSelect label="Categoria" value={filters.category} options={[...CATEGORIES]} onChange={(v) => set('category', v)} testId="filter-category" />
           <label className="field field-compact">
             <span>Status</span>
             <select
@@ -74,11 +68,6 @@ export function SearchFilters({ items, categories, filters, onChange }: SearchFi
               <option value="all">Todos</option>
               <option value="unclassified">Não classificadas</option>
               <option value="classified">Classificadas</option>
-              {QUADRANT_ORDER.map((id) => (
-                <option key={id} value={id}>
-                  {QUADRANTS[id].title}
-                </option>
-              ))}
             </select>
           </label>
         </div>

@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "lint": "oxlint src",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "build:offline": "tsc -b && vite build -c vite.offline.config.ts && node scripts/finalize-offline.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -35,6 +36,7 @@
     "oxlint": "^1.81.0",
     "typescript": "~6.0.2",
     "vite": "^8.3.0",
+    "vite-plugin-singlefile": "^2.3.3",
     "vitest": "^5.0.1"
   }
 }

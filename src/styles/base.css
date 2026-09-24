@@ -18,19 +18,11 @@
   --danger: #b4403a;
   --danger-soft: #fbeeed;
 
-  /* Quadrantes: tons sóbrios para distinguir sem excesso de cor */
-  --q-quick: #2f7a57;
-  --q-quick-tint: #f2f8f4;
-  --q-quick-strong: #e2f0e7;
-  --q-strategic: #2f5b99;
-  --q-strategic-tint: #f1f5fb;
-  --q-strategic-strong: #e0eaf7;
-  --q-incremental: #8f6b24;
-  --q-incremental-tint: #fbf8f1;
-  --q-incremental-strong: #f4ecd9;
-  --q-low: #6c7584;
-  --q-low-tint: #f6f7f8;
-  --q-low-strong: #e9ebef;
+  /* Matriz: tons neutros, sem cor por quadrante */
+  --quadrant-bg: #fafbfc;
+  --quadrant-drop: #eaf0f8;
+  --card-accent: #3d5a80;
+  --card-soft: #e9eef5;
 
   --radius-sm: 6px;
   --radius: 10px;

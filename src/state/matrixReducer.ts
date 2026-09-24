@@ -1,3 +1,4 @@
+import { DEFAULT_CATEGORY, matchCategory } from '../domain/categories'
 import { newId } from '../domain/id'
 import type { Improvement, ImprovementInput, MatrixData, Position } from '../domain/types'
 
@@ -7,24 +8,15 @@ export type MatrixAction =
   | { type: 'delete'; id: string }
   | { type: 'move'; id: string; position: Position | null }
   | { type: 'import'; inputs: ImprovementInput[] }
-  | { type: 'addCategory'; name: string }
-  | { type: 'removeCategory'; name: string }
   | { type: 'replaceAll'; data: MatrixData }
-
-function ensureCategory(categories: string[], name: string): string[] {
-  const trimmed = name.trim()
-  if (!trimmed) return categories
-  const exists = categories.some((c) => c.toLocaleLowerCase('pt-BR') === trimmed.toLocaleLowerCase('pt-BR'))
-  return exists ? categories : [...categories, trimmed]
-}
 
 function clean(input: ImprovementInput): ImprovementInput {
   return {
     name: input.name.trim(),
     description: input.description.trim(),
     process: input.process.trim(),
-    category: input.category.trim(),
-    owner: input.owner.trim(),
+    // somente categorias da lista fechada; qualquer outro valor vira "Outros"
+    category: matchCategory(input.category) ?? DEFAULT_CATEGORY,
     notes: input.notes.trim(),
   }
 }
@@ -41,11 +33,7 @@ export function matrixReducer(state: MatrixData, action: MatrixAction): MatrixDa
         createdAt: now,
         updatedAt: now,
       }
-      return {
-        ...state,
-        items: [...state.items, item],
-        categories: ensureCategory(state.categories, input.category),
-      }
+      return { ...state, items: [...state.items, item] }
     }
     case 'update': {
       const input = clean(action.input)
@@ -61,7 +49,6 @@ export function matrixReducer(state: MatrixData, action: MatrixAction): MatrixDa
               }
             : i,
         ),
-        categories: ensureCategory(state.categories, input.category),
       }
     }
     case 'delete':
@@ -74,18 +61,11 @@ export function matrixReducer(state: MatrixData, action: MatrixAction): MatrixDa
       return { ...state, items: [...state.items.filter((i) => i.id !== action.id), moved] }
     }
     case 'import': {
-      let categories = state.categories
-      const items = action.inputs.map((raw): Improvement => {
-        const input = clean(raw)
-        categories = ensureCategory(categories, input.category)
-        return { ...input, id: newId(), position: null, createdAt: now, updatedAt: now }
-      })
-      return { ...state, items: [...state.items, ...items], categories }
+      const items = action.inputs.map(
+        (raw): Improvement => ({ ...clean(raw), id: newId(), position: null, createdAt: now, updatedAt: now }),
+      )
+      return { ...state, items: [...state.items, ...items] }
     }
-    case 'addCategory':
-      return { ...state, categories: ensureCategory(state.categories, action.name) }
-    case 'removeCategory':
-      return { ...state, categories: state.categories.filter((c) => c !== action.name) }
     case 'replaceAll':
       return action.data
   }
@@ -105,10 +85,6 @@ export function describeAction(state: MatrixData, action: MatrixAction): string 
       return action.position ? `Mover “${name(action.id)}”` : `Remover “${name(action.id)}” da matriz`
     case 'import':
       return `Importar ${action.inputs.length} melhoria(s)`
-    case 'addCategory':
-      return `Adicionar categoria “${action.name}”`
-    case 'removeCategory':
-      return `Remover categoria “${action.name}”`
     case 'replaceAll':
       return 'Substituir dados'
   }

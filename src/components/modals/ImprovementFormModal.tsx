@@ -1,48 +1,42 @@
 import { Info } from 'lucide-react'
 import { useId, useState, type FormEvent } from 'react'
-import { QUADRANT_ORDER, QUADRANTS, quadrantOf } from '../../domain/quadrants'
-import type { Improvement, ImprovementInput, QuadrantId } from '../../domain/types'
+import { CATEGORIES, isCategory } from '../../domain/categories'
+import type { Improvement, ImprovementInput } from '../../domain/types'
 import { Modal } from '../common/Modal'
-
-export type PlacementChoice = QuadrantId | 'none'
 
 interface ImprovementFormModalProps {
   item?: Improvement
-  categories: string[]
   processes: string[]
-  owners: string[]
-  onSubmit: (input: ImprovementInput, placement: PlacementChoice) => void
+  onSubmit: (input: ImprovementInput) => void
   onClose: () => void
 }
 
-const EMPTY: ImprovementInput = { name: '', description: '', process: '', category: '', owner: '', notes: '' }
-const NEW_CATEGORY = '__new__'
+const EMPTY: ImprovementInput = { name: '', description: '', process: '', category: '', notes: '' }
 
-export function ImprovementFormModal({ item, categories, processes, owners, onSubmit, onClose }: ImprovementFormModalProps) {
+type Errors = Partial<Record<'name' | 'category', string>>
+
+export function ImprovementFormModal({ item, processes, onSubmit, onClose }: ImprovementFormModalProps) {
   const [values, setValues] = useState<ImprovementInput>(() =>
     item
-      ? { name: item.name, description: item.description, process: item.process, category: item.category, owner: item.owner, notes: item.notes }
+      ? { name: item.name, description: item.description, process: item.process, category: item.category, notes: item.notes }
       : EMPTY,
   )
-  const initialPlacement: PlacementChoice = (item && quadrantOf(item)) || 'none'
-  const [placement, setPlacement] = useState<PlacementChoice>(initialPlacement)
-  const [newCategory, setNewCategory] = useState<string | null>(null)
-  const [error, setError] = useState('')
-  const ids = { process: useId(), owner: useId() }
+  const [errors, setErrors] = useState<Errors>({})
+  const processListId = useId()
 
-  const categoryOptions =
-    values.category && !categories.includes(values.category) ? [...categories, values.category] : categories
-
-  const set = (key: keyof ImprovementInput, value: string) => setValues((v) => ({ ...v, [key]: value }))
+  const set = (key: keyof ImprovementInput, value: string) => {
+    setValues((v) => ({ ...v, [key]: value }))
+    if (key === 'name' || key === 'category') setErrors((e) => ({ ...e, [key]: undefined }))
+  }
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
-    if (!values.name.trim()) {
-      setError('Informe o nome da melhoria.')
-      return
-    }
-    const category = newCategory !== null ? newCategory.trim() : values.category
-    onSubmit({ ...values, category }, placement)
+    const next: Errors = {}
+    if (!values.name.trim()) next.name = 'Informe o nome da melhoria.'
+    if (!isCategory(values.category)) next.category = 'Selecione uma categoria.'
+    setErrors(next)
+    if (next.name || next.category) return
+    onSubmit(values)
   }
 
   return (
@@ -69,17 +63,14 @@ export function ImprovementFormModal({ item, categories, processes, owners, onSu
           </span>
           <input
             value={values.name}
-            onChange={(e) => {
-              set('name', e.target.value)
-              setError('')
-            }}
+            onChange={(e) => set('name', e.target.value)}
             placeholder="Ex.: Automatizar envio de frequência"
             maxLength={140}
-            aria-invalid={Boolean(error)}
+            aria-invalid={Boolean(errors.name)}
             data-autofocus
             data-testid="field-name"
           />
-          {error && <small className="field-error">{error}</small>}
+          {errors.name && <small className="field-error">{errors.name}</small>}
         </label>
 
         <label className="field span-2">
@@ -93,80 +84,42 @@ export function ImprovementFormModal({ item, categories, processes, owners, onSu
           />
         </label>
 
-        <label className="field">
+        <label className="field span-2">
           <span>Processo</span>
           <input
             value={values.process}
             onChange={(e) => set('process', e.target.value)}
-            list={ids.process}
+            list={processListId}
             placeholder="Ex.: Controle de Frequência"
             data-testid="field-process"
           />
-          <datalist id={ids.process}>
+          <datalist id={processListId}>
             {processes.map((p) => (
               <option key={p} value={p} />
             ))}
           </datalist>
         </label>
 
-        <label className="field">
-          <span>Categoria</span>
-          {newCategory === null ? (
-            <select
-              value={values.category}
-              onChange={(e) => (e.target.value === NEW_CATEGORY ? setNewCategory('') : set('category', e.target.value))}
-              data-testid="field-category"
-            >
-              <option value="">Selecione…</option>
-              {categoryOptions.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-              <option value={NEW_CATEGORY}>+ Nova categoria…</option>
-            </select>
-          ) : (
-            <div className="inline-input">
-              <input
-                autoFocus
-                value={newCategory}
-                onChange={(e) => setNewCategory(e.target.value)}
-                placeholder="Nome da nova categoria"
-                data-testid="field-new-category"
-              />
-              <button type="button" className="link-btn" onClick={() => setNewCategory(null)}>
-                Cancelar
-              </button>
-            </div>
-          )}
-        </label>
-
-        <label className="field">
-          <span>Responsável</span>
-          <input
-            value={values.owner}
-            onChange={(e) => set('owner', e.target.value)}
-            list={ids.owner}
-            placeholder="Nome do responsável"
-            data-testid="field-owner"
-          />
-          <datalist id={ids.owner}>
-            {owners.map((o) => (
-              <option key={o} value={o} />
-            ))}
-          </datalist>
-        </label>
-
-        <label className="field">
-          <span>Posição na matriz</span>
-          <select value={placement} onChange={(e) => setPlacement(e.target.value as PlacementChoice)} data-testid="field-placement">
-            <option value="none">Não classificada (arrastar depois)</option>
-            {QUADRANT_ORDER.map((id) => (
-              <option key={id} value={id}>
-                {QUADRANTS[id].title} — {QUADRANTS[id].axes}
+        <label className="field span-2">
+          <span>
+            Categoria <em className="req">*</em>
+          </span>
+          <select
+            value={values.category}
+            onChange={(e) => set('category', e.target.value)}
+            aria-invalid={Boolean(errors.category)}
+            data-testid="field-category"
+          >
+            <option value="" disabled>
+              Selecione…
+            </option>
+            {CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {c}
               </option>
             ))}
           </select>
+          {errors.category && <small className="field-error">{errors.category}</small>}
         </label>
 
         <label className="field span-2">
@@ -176,7 +129,7 @@ export function ImprovementFormModal({ item, categories, processes, owners, onSu
       </form>
       {!item && (
         <p className="form-tip">
-          <Info size={12} /> Dica: a classificação principal é visual — basta arrastar o card para a matriz.
+          <Info size={12} /> A classificação de impacto e esforço é feita arrastando o card para a matriz.
         </p>
       )}
     </Modal>

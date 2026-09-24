@@ -1,10 +1,20 @@
-import { LocalStorageRepository } from './localStorageRepository'
+import { IndexedDbRepository } from './indexedDbRepository'
 import type { MatrixRepository } from './repository'
 
 export type { MatrixRepository } from './repository'
+export { parseMatrixData } from './parse'
 
 /** Ponto único de troca do mecanismo de persistência. */
-export const repository: MatrixRepository = new LocalStorageRepository()
+export const repository: MatrixRepository = new IndexedDbRepository()
+
+/** Pede ao navegador que não descarte os dados locais automaticamente (quando suportado). */
+export function requestPersistentStorage(): void {
+  try {
+    void navigator.storage?.persist?.()
+  } catch {
+    // opcional
+  }
+}
 
 /** Preferências de interface (seções recolhidas etc.), independentes dos dados. */
 export function loadPreference<T>(key: string, fallback: T): T {

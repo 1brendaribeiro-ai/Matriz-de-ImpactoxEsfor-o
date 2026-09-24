@@ -3,37 +3,59 @@
 Aplicação web para cadastrar oportunidades de melhoria e priorizá-las visualmente, arrastando cada uma para a
 **Matriz de Impacto x Esforço**.
 
-**Cadastrar → Arrastar → Posicionar → Priorizar → Analisar**
+**Cadastrar → Arrastar → Posicionar → Analisar**
 
-## Como executar
+## Uso offline (recomendado)
+
+O arquivo **`offline/matriz-impacto-esforco.html`** é a aplicação completa em um único arquivo: código,
+estilos, fontes e bibliotecas de exportação (PDF, Excel e PNG) estão embutidos. Não depende de internet,
+servidor ou CDN.
+
+1. Copie o arquivo para o computador (ex.: Área de Trabalho).
+2. Dê dois cliques para abrir no navegador (Chrome ou Edge recomendados).
+3. Use normalmente. Os dados ficam gravados no próprio dispositivo e continuam lá ao reabrir o arquivo.
+
+Os dados ficam associados ao navegador e ao local do arquivo: abra sempre o mesmo arquivo, no mesmo navegador.
+Para levar os dados a outro computador, use **Configurações → Exportar backup (JSON)** e **Restaurar backup**.
+
+Para gerar novamente o arquivo offline a partir do código:
 
 ```bash
 npm install
-npm run dev        # desenvolvimento em http://localhost:5173
-npm run build      # gera a versão de produção em dist/ (arquivos estáticos)
-npm run preview    # serve o build
+npm run build:offline   # gera offline/matriz-impacto-esforco.html e confere que não há recursos externos
 ```
 
-O conteúdo de `dist/` pode ser publicado em qualquer servidor de arquivos estáticos.
+## Desenvolvimento
+
+```bash
+npm run dev        # http://localhost:5173
+npm run build      # versão para servidor web em dist/
+```
 
 ## Funcionalidades
 
+- **Cadastro** com os campos Nome da melhoria, Descrição, Processo, Categoria e Observações
+- **Categorias em lista fechada**: Modelo de Gestão e Organização; Fluxo de atividades, informações e
+  documentação; Recursos humanos; Recursos Tecnológicos; Outros
 - **Painel lateral** com as seções recolhíveis *Melhorias não classificadas* e *Melhorias classificadas*
-- **Arrastar e soltar** do painel para a matriz, entre quadrantes, dentro do mesmo quadrante e de volta ao painel
-  (remove a classificação). O quadrante sob o ponteiro fica destacado com o rótulo **“Soltar aqui”** e uma
-  pré-visualização tracejada mostra onde o card vai ficar
-- **Classificação automática pela posição**: esquerda/direita = menor/maior esforço; baixo/cima = menor/maior impacto.
-  O terço central de cada eixo corresponde a “Médio”
-- **Detalhes, edição e exclusão** (com confirmação); o formulário também permite escolher o quadrante sem arrastar
-- **Busca** por nome, processo e categoria (sem diferenciar acentos) e **filtros** por processo, categoria,
-  responsável e status. Clicar em um indicador do topo filtra pelo status correspondente
-- **Indicadores** atualizados em tempo real
-- **Desfazer/Refazer** (botões ou Ctrl+Z / Ctrl+Y) e **salvamento automático**; Ctrl+S salva na hora
-- **Categorias configuráveis** (Configurações), backup/restauração em JSON e recarga dos dados de exemplo
-- **Importação** de CSV (`;` ou `,`, UTF-8 ou Windows-1252) ou Excel `.xlsx` com as colunas
-  Melhoria, Descrição, Processo, Categoria, Responsável, Observações. Há um modelo para baixar na tela de importação
-- **Exportação** para Excel, PDF (matriz + relação das melhorias) e PNG
-- Layout para desktop, notebook e tablet (arraste por toque: segure o card por um instante)
+  (nome, processo e categoria em cada card)
+- **Arrastar e soltar** do painel para a matriz, entre quadrantes, dentro do mesmo quadrante e de volta ao painel.
+  A área sob o ponteiro fica destacada com **“Soltar aqui”** e uma pré-visualização mostra onde o card vai ficar
+- **Matriz neutra**: quatro quadrantes sem títulos; apenas os eixos Impacto (Baixo → Alto) e Esforço (Baixo → Alto).
+  A posição do card define impacto e esforço (o terço central de cada eixo corresponde a “Médio”)
+- **Detalhes, edição e exclusão** (com confirmação)
+- **Busca** por nome, processo e categoria e **filtros** por processo, categoria e situação
+- **Indicadores**: total, não classificadas e classificadas (clicar filtra)
+- **Desfazer/Refazer** (Ctrl+Z / Ctrl+Y) e **salvamento automático**; Ctrl+S salva na hora
+- **Importação** de CSV ou Excel `.xlsx` (colunas Melhoria, Descrição, Processo, Categoria, Observações).
+  Categorias fora da lista entram como “Outros”, e o texto original vai para Observações
+- **Exportação** para PDF (matriz + relação das melhorias), Excel e PNG, gerada localmente
+
+## Armazenamento
+
+Os dados ficam no dispositivo, no **IndexedDB** do navegador, com uma cópia de segurança em `localStorage`
+(garante a gravação ao fechar a janela). Dados salvos por versões anteriores são migrados automaticamente:
+o campo Responsável é descartado e as categorias antigas são convertidas para a nova lista.
 
 ## Arquitetura
 
@@ -41,7 +63,7 @@ O conteúdo de `dist/` pode ser publicado em qualquer servidor de arquivos está
 src/
   domain/        tipos, regras dos quadrantes, filtros, dados de exemplo
   state/         reducer das ações + histórico (desfazer/refazer) e hook com autosave
-  storage/       persistência: interface MatrixRepository + implementação em localStorage
+  storage/       persistência: interface MatrixRepository, IndexedDB (principal) e migração de dados
   io/            importação (CSV/XLSX) e exportação (Excel/PDF/PNG/JSON)
   components/
     dnd/         controle do arrastar e soltar (dnd-kit)
@@ -54,19 +76,10 @@ src/
   styles/        CSS por área
 ```
 
-### Trocando o armazenamento por um banco de dados
+### Trocando o armazenamento
 
-A aplicação depende apenas da interface `MatrixRepository` (`src/storage/repository.ts`):
-
-```ts
-interface MatrixRepository {
-  load(): Promise<MatrixData | null>
-  save(data: MatrixData): Promise<void>
-  clear(): Promise<void>
-}
-```
-
-Basta criar uma implementação (por exemplo, chamando uma API REST) e trocá-la em `src/storage/index.ts`.
+A aplicação depende apenas da interface `MatrixRepository` (`src/storage/repository.ts`). Para usar outro
+mecanismo, crie uma implementação e troque-a em `src/storage/index.ts`.
 
 ## Testes
 
@@ -75,6 +88,8 @@ npm test           # testes unitários (regras da matriz, histórico, filtros, i
 npm run test:e2e   # testes ponta a ponta no navegador (Playwright)
 ```
 
-Os testes ponta a ponta cobrem: criação, exibição no painel, arraste para os quatro quadrantes, movimentação entre
-quadrantes, retorno ao painel, edição, exclusão com confirmação, busca e filtros, indicadores, desfazer/refazer,
-persistência após recarregar, importação de CSV, categorias e exportação para Excel/PNG/PDF.
+Os testes ponta a ponta cobrem cadastro (sem Responsável, categorias fechadas), matriz sem nomes de quadrantes,
+arraste para os quatro quadrantes, movimentação, edição, exclusão, busca, filtros, indicadores,
+desfazer/refazer, persistência em IndexedDB, migração de dados antigos, importação e exportação. Um teste
+específico abre o arquivo offline **com a rede desligada**: cria, edita, move, exclui, salva, fecha o navegador,
+reabre, confere os dados e exporta PDF, Excel e PNG, verificando que nenhuma requisição externa foi feita.
